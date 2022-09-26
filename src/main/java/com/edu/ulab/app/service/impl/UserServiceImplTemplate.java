@@ -1,17 +1,16 @@
 package com.edu.ulab.app.service.impl;
 
 import com.edu.ulab.app.dto.UserDto;
+import com.edu.ulab.app.exception.DeleteExeption;
 import com.edu.ulab.app.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Objects;
 
 @Slf4j
@@ -43,18 +42,33 @@ public class UserServiceImplTemplate implements UserService {
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        // реализовать недстающие методы
-        return null;
+        log.info("Got a user update request with {}", userDto);
+        final String UPDATE_SQL = "UPDATE USER SET fullName=?, title=?, age=? WHERE id=?";
+        jdbcTemplate.update(UPDATE_SQL, userDto.getFullName(), userDto.getTitle(), userDto.getAge(), userDto.getId());
+        return userDto;
     }
 
     @Override
     public UserDto getUserById(Long id) {
-        // реализовать недстающие методы
-        return null;
+        log.info("Got a user get request with id {}", id);
+        if(id == null){
+            throw new NullPointerException("Id may not be null");
+        }
+        final String GET_SQL = "SELECT * FROM USER WHERE id=?";
+        return (UserDto) jdbcTemplate.queryForObject(GET_SQL, new Object[]{id}, new BeanPropertyRowMapper(UserDto.class));
     }
 
     @Override
     public void deleteUserById(Long id) {
-        // реализовать недстающие методы
+        log.info("Got a user delete request with id {}", id);
+        if(id == null){
+            throw new NullPointerException("Id may not be null");
+        }
+        final String DELETE_SQL = "DELETE FROM USER WHERE id=?";
+        Object[] args = new Object[] {id};
+
+        if(jdbcTemplate.update(DELETE_SQL, args) != 1){
+            throw new DeleteExeption("Failed to delete user with id " + id);
+        }
     }
 }

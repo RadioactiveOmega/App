@@ -2,6 +2,8 @@ package com.edu.ulab.app.service.impl;
 
 import com.edu.ulab.app.dto.UserDto;
 import com.edu.ulab.app.entity.Person;
+import com.edu.ulab.app.exception.NotFoundException;
+import com.edu.ulab.app.exception.UpdateExeption;
 import com.edu.ulab.app.mapper.UserMapper;
 import com.edu.ulab.app.repository.UserRepository;
 import com.edu.ulab.app.service.UserService;
@@ -32,18 +34,46 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        // реализовать недстающие методы
-        return null;
+        Person user = userMapper.userDtoToPerson(userDto);
+        log.info("Mapped user: {}", user);
+        if(!userRepository.existsById(user.getId())){
+            throw new UpdateExeption("Failed to update with user: " + user + "\nUser with id " + user.getId() + " is not exist");
+        }
+        Person updatedUser = userRepository
+                .findById(user.getId())
+                .orElseThrow(() -> new UpdateExeption("Failed to update with user: " +
+                        user + "\nUser with id " + user.getId() + " is null"));
+
+        log.info("Get user for update: {}", updatedUser);
+        updatedUser.setFullName(user.getFullName());
+        updatedUser.setAge(user.getAge());
+        updatedUser.setTitle(user.getTitle());
+        log.info("Updated book: {}", updatedUser);
+        userRepository.save(updatedUser);
+        return userMapper.personToUserDto(updatedUser);
     }
 
     @Override
     public UserDto getUserById(Long id) {
-        // реализовать недстающие методы
-        return null;
+        log.info("Got a request for a user with id: {}", id);
+        if(id == null){
+            throw new NullPointerException("Id may not be null");
+        }
+        Person foundPerson = userRepository.findById(id).orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+        log.info("Found user: {}", foundPerson);
+        return userMapper.personToUserDto(foundPerson);
     }
 
     @Override
     public void deleteUserById(Long id) {
-        // реализовать недстающие методы
+        log.info("Received a request to delete a user with id: {}", id);
+        if(id == null) {
+            throw new NullPointerException("Id may not be null");
+        }
+        userRepository
+                .findById(id)
+                .orElseThrow(() -> new NotFoundException("Failed to delete user with id " + id + ". User is not exist"));
+        log.info("Delete a user with id: {}", id);
+        userRepository.deleteById(id);
     }
 }
