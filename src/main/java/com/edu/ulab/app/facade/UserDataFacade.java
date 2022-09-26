@@ -60,13 +60,48 @@ public class UserDataFacade {
     }
 
     public UserBookResponse updateUserWithBooks(UserBookRequest userBookRequest) {
-        return null;
+        log.info("Got user book update request: {}", userBookRequest);
+        UserDto userDto = userMapper.userRequestToUserDto(userBookRequest.getUserRequest());
+        log.info("Mapped user request: {}", userDto);
+        UserDto updateUser = userService.updateUser(userDto);
+        log.info("Updated user: {}", updateUser);
+        List<Long> bookIdList = userBookRequest.getBookRequests()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(bookMapper::bookRequestToBookDto)
+                .peek(bookDto -> bookDto.setUserId(updateUser.getId()))
+                .map(bookService::updateBook)
+                .map(BookDto::getId)
+                .toList();
+        log.info("Collected book ids: {}", bookIdList);
+        return UserBookResponse.builder()
+                .userId(updateUser.getId())
+                .booksIdList(bookIdList).build();
     }
 
     public UserBookResponse getUserWithBooks(Long userId) {
-        return null;
+        log.info("Got user book get request: {}", userId);
+        List<Long> bookIdList = bookService.getAllBooks()
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(b->b.getUserId().equals(userId))
+                .map(BookDto::getId)
+                .toList();
+        log.info("Collected book ids: {}", bookIdList);
+        return UserBookResponse.builder()
+                .userId(userId)
+                .booksIdList(bookIdList)
+                .build();
     }
 
     public void deleteUserWithBooks(Long userId) {
+        log.info("Got user book delete request: {}", userId);
+        List<Long> deletedBooks = bookService.getAllBooks().stream()
+                .filter(Objects::nonNull)
+                .filter(b-> b.getUserId().equals(userId))
+                .map(BookDto::getId)
+                .peek(bookService::deleteBookById).toList();
+        log.info("Deleted books: {}", deletedBooks);
+        userService.deleteUserById(userId);
     }
 }

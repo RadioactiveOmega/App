@@ -1,6 +1,8 @@
 package com.edu.ulab.app.web.handler;
 
+import com.edu.ulab.app.exception.DeleteExeption;
 import com.edu.ulab.app.exception.NotFoundException;
+import com.edu.ulab.app.exception.UpdateExeption;
 import com.edu.ulab.app.web.response.BaseWebResponse;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,18 @@ public class ControllerExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<BaseWebResponse> handleNotFoundExceptionException(@NonNull final NotFoundException exc) {
+        log.error(exc.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new BaseWebResponse(createErrorMessage(exc)));
+    }
+    @ExceptionHandler(DeleteExeption.class)
+    public ResponseEntity<BaseWebResponse> handleDeleteExeptionException(@NonNull final DeleteExeption exc) {
+        log.error(exc.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new BaseWebResponse(createErrorMessage(exc)));
+    }
+    @ExceptionHandler(UpdateExeption.class)
+    public ResponseEntity<BaseWebResponse> handleUpdateExeptionException(@NonNull final UpdateExeption exc) {
         log.error(exc.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new BaseWebResponse(createErrorMessage(exc)));
